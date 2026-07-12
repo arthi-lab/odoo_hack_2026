@@ -1467,8 +1467,9 @@
                             <div class="form-group" style="margin-bottom: 0;">
                                 <label>Distance Unit</label>
                                 <select name="distance_unit" class="form-control">
-                                    <option value="km" selected="selected">Kilometers (km)</option>
-                                    <option value="miles">Miles (mi)</option>
+                                    <t t-set="current_unit" t-value="request.env['ir.config_parameter'].sudo().get_param('transitops.distance_unit', 'kilometers')"/>
+                                    <option value="kilometers" t-att-selected="'selected' if current_unit == 'kilometers' else None">Kilometers (km)</option>
+                                    <option value="miles" t-att-selected="'selected' if current_unit == 'miles' else None">Miles (mi)</option>
                                 </select>
                             </div>
                             

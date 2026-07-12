@@ -42,6 +42,7 @@ class TransitopsHome(Home):
                 'dispatcher': 'transitops.group_transitops_dispatcher',
                 'safety_officer': 'transitops.group_transitops_safety_officer',
                 'financial_analyst': 'transitops.group_transitops_financial_analyst',
+                'admin': 'base.group_system',
             }
 
             if role_rbac in ROLE_GROUPS:
@@ -196,6 +197,7 @@ class TransitopsHome(Home):
 
     def _get_roles_list(self):
         return [
+            ('admin', _('Administrator')),
             ('fleet_manager', _('Fleet Manager')),
             ('dispatcher', _('Dispatcher')),
             ('safety_officer', _('Safety Officer')),
