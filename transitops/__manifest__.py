@@ -42,7 +42,7 @@ Key Features:
    * Vehicle Return on Investment (ROI).
    * Dashboard charts and analytics.
     """,
-    'author': 'Antigravity / Google DeepMind',
+    'author': 'Odoo-Hackthon',
     'category': 'Operations/Logistics',
     'depends': ['base', 'mail'],
     'data': [],
