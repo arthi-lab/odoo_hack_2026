@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Server action to create/open dashboard record -->
+        <record id="action_transitops_dashboard_server" model="ir.actions.server">
+            <field name="name">Dashboard</field>
+            <field name="model_id" ref="model_transitops_dashboard"/>
+            <field name="state">code</field>
+            <field name="code">
+action = model.action_open_dashboard()
+            </field>
+        </record>
+
+        <!-- Menu Item for Dashboard -->
+        <menuitem id="menu_transitops_dashboard" 
+                  name="Dashboard" 
+                  parent="menu_transitops_root" 
+                  action="action_transitops_dashboard_server"
+                  sequence="10"/>
+
+        <!-- Form view representing the Dashboard page -->
+        <record id="view_transitops_dashboard_form" model="ir.ui.view">
+            <field name="name">transitops.dashboard.form</field>
+            <field name="model">transitops.dashboard</field>
+            <field name="arch" type="xml">
+                <form string="TransitOps Dashboard" create="0" edit="0" delete="0">
+                    <sheet>
+                        <style>
+                            .transitops-dashboard {
+                                background-color: #f8f9fa;
+                                padding: 20px;
+                                font-family: 'Inter', sans-serif;
+                            }
+                            .kpi-container {
+                                display: grid;
+                                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                                gap: 15px;
+                                margin-bottom: 25px;
+                            }
+                            .kpi-card {
+                                background: #ffffff;
+                                border-radius: 12px;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                                padding: 20px;
+                                text-align: center;
+                                transition: transform 0.2s;
+                                border-top: 4px solid #0d6efd;
+                            }
+                            .kpi-card:hover {
+                                transform: translateY(-5px);
+                            }
+                            .kpi-card.blue { border-top-color: #0d6efd; }
+                            .kpi-card.green { border-top-color: #198754; }
+                            .kpi-card.orange { border-top-color: #fd7e14; }
+                            .kpi-card.red { border-top-color: #dc3545; }
+                            .kpi-card.indigo { border-top-color: #6610f2; }
+                            .kpi-value {
+                                font-size: 28px;
+                                font-weight: 700;
+                                color: #212529;
+                                margin-top: 5px;
+                            }
+                            .kpi-label {
+                                font-size: 12px;
+                                color: #6c757d;
+                                text-transform: uppercase;
+                                font-weight: 600;
+                            }
+                            .dashboard-grid {
+                                display: grid;
+                                grid-template-columns: 2fr 1fr;
+                                gap: 25px;
+                            }
+                            .dashboard-panel {
+                                background: #ffffff;
+                                border-radius: 12px;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                                padding: 20px;
+                            }
+                            .panel-title {
+                                font-size: 16px;
+                                font-weight: 700;
+                                color: #343a40;
+                                margin-bottom: 15px;
+                                border-bottom: 2px solid #f1f3f5;
+                                padding-bottom: 8px;
+                            }
+                            .progress-row {
+                                margin-bottom: 15px;
+                            }
+                            .progress-label-container {
+                                display: flex;
+                                justify-content: space-between;
+                                font-size: 12px;
+                                font-weight: 600;
+                                margin-bottom: 4px;
+                            }
+                        </style>
+                        <div class="transitops-dashboard">
+                            <!-- Header / Filters bar -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h2 style="font-weight: 800; color: #212529; margin: 0;">TransitOps Dashboard</h2>
+                                    <p class="text-muted" style="margin: 0; font-size: 13px;">Smart Transport Operations Platform Overview</p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-light text-dark p-2 border">Vehicle Type: All</span>
+                                    <span class="badge bg-light text-dark p-2 border">Status: All</span>
+                                    <span class="badge bg-light text-dark p-2 border">Region: All</span>
+                                </div>
+                            </div>
+
+                            <!-- KPI Cards -->
+                            <div class="kpi-container">
+                                <div class="kpi-card blue">
+                                    <div class="kpi-label">Active Vehicles</div>
+                                    <div class="kpi-value"><field name="active_vehicles"/></div>
+                                </div>
+                                <div class="kpi-card green">
+                                    <div class="kpi-label">Available Vehicles</div>
+                                    <div class="kpi-value"><field name="available_vehicles"/></div>
+                                </div>
+                                <div class="kpi-card orange">
+                                    <div class="kpi-label">In Maintenance</div>
+                                    <div class="kpi-value"><field name="maintenance_vehicles"/></div>
+                                </div>
+                                <div class="kpi-card blue">
+                                    <div class="kpi-label">Active Trips</div>
+                                    <div class="kpi-value"><field name="active_trips"/></div>
+                                </div>
+                                <div class="kpi-card indigo">
+                                    <div class="kpi-label">Pending Trips</div>
+                                    <div class="kpi-value"><field name="pending_trips"/></div>
+                                </div>
+                                <div class="kpi-card green">
+                                    <div class="kpi-label">Drivers on Duty</div>
+                                    <div class="kpi-value"><field name="drivers_on_duty"/></div>
+                                </div>
+                                <div class="kpi-card orange">
+                                    <div class="kpi-label">Utilization</div>
+                                    <div class="kpi-value"><field name="fleet_utilization" widget="integer"/>%</div>
+                                </div>
+                            </div>
+
+                            <!-- Main Layout Grid -->
+                            <div class="dashboard-grid">
+                                <!-- Left Panel: Recent Trips -->
+                                <div class="dashboard-panel">
+                                    <div class="panel-title">RECENT TRIPS</div>
+                                    <field name="recent_trip_ids" readonly="1">
+                                        <list create="0" edit="0" delete="0">
+                                            <field name="name" string="Trip"/>
+                                            <field name="vehicle_id" string="Vehicle"/>
+                                            <field name="driver_id" string="Driver"/>
+                                            <field name="status" widget="badge" 
+                                                   decoration-muted="status == 'draft'" 
+                                                   decoration-info="status == 'dispatched'" 
+                                                   decoration-success="status == 'completed'" 
+                                                   decoration-danger="status == 'cancelled'"/>
+                                            <field name="eta" string="ETA"/>
+                                        </list>
+                                    </field>
+                                </div>
+
+                                <!-- Right Panel: Vehicle Status -->
+                                <div class="dashboard-panel">
+                                    <div class="panel-title">VEHICLE STATUS</div>
+                                    
+                                    <!-- Available -->
+                                    <div class="progress-row">
+                                        <div class="progress-label-container">
+                                            <span>Available</span>
+                                            <span><field name="available_count"/> Vehicles</span>
+                                        </div>
+                                        <field name="available_pct" widget="progressbar"/>
+                                    </div>
+
+                                    <!-- On Trip -->
+                                    <div class="progress-row">
+                                        <div class="progress-label-container">
+                                            <span>On Trip</span>
+                                            <span><field name="on_trip_count"/> Vehicles</span>
+                                        </div>
+                                        <field name="on_trip_pct" widget="progressbar"/>
+                                    </div>
+
+                                    <!-- In Shop -->
+                                    <div class="progress-row">
+                                        <div class="progress-label-container">
+                                            <span>In Shop</span>
+                                            <span><field name="in_shop_count"/> Vehicles</span>
+                                        </div>
+                                        <field name="in_shop_pct" widget="progressbar"/>
+                                    </div>
+
+                                    <!-- Retired -->
+                                    <div class="progress-row">
+                                        <div class="progress-label-container">
+                                            <span>Retired</span>
+                                            <span><field name="retired_count"/> Vehicles</span>
+                                        </div>
+                                        <field name="retired_pct" widget="progressbar"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

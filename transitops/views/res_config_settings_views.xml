@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.transitops</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="99"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form" position="inside">
+                    <app string="TransitOps" name="transitops">
+                        <block title="General Settings" id="transitops_settings_block">
+                            <setting string="Depot Configuration" help="Set your transit depot name.">
+                                <field name="transitops_depot_name"/>
+                            </setting>
+                            <setting string="Currency Settings" help="Set currency unit for financial logging.">
+                                <field name="transitops_currency_id"/>
+                            </setting>
+                            <setting string="Distance Settings" help="Configure the default distance unit.">
+                                <field name="transitops_distance_unit"/>
+                            </setting>
+                        </block>
+                    </app>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="action_transitops_config_settings" model="ir.actions.act_window">
+            <field name="name">Settings</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{'module': 'transitops'}</field>
+        </record>
+
+        <menuitem id="menu_transitops_settings" 
+                  name="Settings" 
+                  parent="menu_transitops_root" 
+                  action="action_transitops_config_settings"
+                  groups="base.group_system"
+                  sequence="100"/>
+    </data>
+</odoo>
