@@ -1,0 +1,1534 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="portal_dashboard_template">
+        <t t-call="web.layout">
+            <t t-set="html_data" t-value="{'style': 'height: 100%;'}"/>
+            <t t-set="title">TransitOps Portal - Dashboard</t>
+            <t t-set="head">
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+                <style type="text/css">
+                    :root {
+                        --sidebar-width: 260px;
+                        --primary-color: #f59e0b; /* Amber */
+                        --primary-hover: #d97706;
+                        --bg-main: #f8fafc;
+                        --sidebar-bg: #1e252b;
+                        --text-light: #94a3b8;
+                        --border-color: #e2e8f0;
+                        --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+                    }
+                    body {
+                        font-family: 'Inter', sans-serif;
+                        margin: 0;
+                        padding: 0;
+                        background-color: var(--bg-main);
+                        height: 100vh;
+                        overflow: hidden;
+                        color: #1e293b;
+                    }
+                    .portal-container {
+                        display: flex;
+                        height: 100vh;
+                        width: 100vw;
+                        overflow: hidden;
+                    }
+                    
+                    /* Left Sidebar */
+                    .portal-sidebar {
+                        width: var(--sidebar-width);
+                        background-color: var(--sidebar-bg);
+                        color: #f8fafc;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        flex-shrink: 0;
+                        border-right: 1px solid #2d3748;
+                    }
+                    .sidebar-header {
+                        padding: 1.5rem 1.25rem;
+                        border-bottom: 1px solid #2d3748;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                    }
+                    .logo-icon {
+                        width: 36px;
+                        height: 36px;
+                        background: linear-gradient(135deg, #f59e0b, #d97706);
+                        border-radius: 6px;
+                        position: relative;
+                    }
+                    .logo-icon::after {
+                        content: '';
+                        position: absolute;
+                        top: 8px;
+                        left: 8px;
+                        right: 8px;
+                        bottom: 8px;
+                        border: 2px dashed #ffffff;
+                        opacity: 0.8;
+                    }
+                    .sidebar-brand-name {
+                        font-size: 1.25rem;
+                        font-weight: 800;
+                        margin: 0;
+                        letter-spacing: -0.025em;
+                        color: #ffffff;
+                    }
+                    .sidebar-menu {
+                        list-style: none;
+                        padding: 1rem 0.75rem;
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+                        flex-grow: 1;
+                        overflow-y: auto;
+                    }
+                    .menu-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.75rem 1rem;
+                        color: var(--text-light);
+                        text-decoration: none;
+                        border-radius: 6px;
+                        font-size: 0.9375rem;
+                        font-weight: 500;
+                        cursor: pointer;
+                        transition: background-color 0.2s, color 0.2s;
+                    }
+                    .menu-item:hover {
+                        background-color: rgba(255, 255, 255, 0.05);
+                        color: #ffffff;
+                    }
+                    .menu-item.active {
+                        background-color: var(--primary-color);
+                        color: #ffffff;
+                        font-weight: 600;
+                    }
+                    .sidebar-footer {
+                        padding: 1rem 1.25rem;
+                        border-top: 1px solid #2d3748;
+                        font-size: 0.75rem;
+                        color: #64748b;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .btn-logout {
+                        color: #f87171;
+                        text-decoration: none;
+                        font-weight: 600;
+                    }
+                    .btn-logout:hover {
+                        text-decoration: underline;
+                    }
+                    
+                    /* Main Content Area */
+                    .portal-main {
+                        flex-grow: 1;
+                        display: flex;
+                        flex-direction: column;
+                        overflow: hidden;
+                    }
+                    
+                    /* Top Header */
+                    .main-header {
+                        height: 70px;
+                        background-color: #ffffff;
+                        border-bottom: 1px solid var(--border-color);
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 0 2rem;
+                        flex-shrink: 0;
+                    }
+                    .search-container {
+                        position: relative;
+                        width: 100%;
+                        max-width: 320px;
+                    }
+                    .search-input {
+                        width: 100%;
+                        padding: 0.5rem 1rem 0.5rem 2.25rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 6px;
+                        font-size: 0.875rem;
+                        outline: none;
+                        transition: border-color 0.2s;
+                    }
+                    .search-input:focus {
+                        border-color: var(--primary-color);
+                    }
+                    .search-icon {
+                        position: absolute;
+                        left: 0.75rem;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        color: #94a3b8;
+                        pointer-events: none;
+                        font-size: 0.875rem;
+                    }
+                    .user-profile {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                    }
+                    .user-details {
+                        text-align: right;
+                    }
+                    .user-name {
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        color: #0f172a;
+                        margin: 0;
+                    }
+                    .user-role-badge {
+                        display: inline-block;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        color: var(--primary-color);
+                        background-color: rgba(245, 158, 11, 0.1);
+                        padding: 0.1rem 0.5rem;
+                        border-radius: 100px;
+                        margin-top: 0.1rem;
+                    }
+                    .user-avatar {
+                        width: 40px;
+                        height: 40px;
+                        background-color: #3b82f6;
+                        color: #ffffff;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        font-weight: 700;
+                        font-size: 0.875rem;
+                        border: 2px solid #ffffff;
+                        box-shadow: 0 0 0 2px #3b82f6;
+                    }
+                    
+                    /* Dynamic Content Container */
+                    .content-wrapper {
+                        flex-grow: 1;
+                        padding: 2rem;
+                        overflow-y: auto;
+                    }
+                    .tab-content {
+                        display: none;
+                    }
+                    .tab-content.active {
+                        display: block;
+                        animation: fadeIn 0.3s ease-in-out;
+                    }
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: translateY(5px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    
+                    /* Common Page Header */
+                    .page-title-section {
+                        margin-bottom: 1.5rem;
+                    }
+                    .page-title {
+                        font-size: 1.5rem;
+                        font-weight: 800;
+                        color: #0f172a;
+                        margin: 0 0 0.25rem 0;
+                    }
+                    .page-subtitle {
+                        font-size: 0.875rem;
+                        color: #64748b;
+                        margin: 0;
+                    }
+                    
+                    /* Filters Section */
+                    .filters-bar {
+                        display: flex;
+                        gap: 0.75rem;
+                        margin-bottom: 1.5rem;
+                    }
+                    .filter-select {
+                        padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 6px;
+                        font-size: 0.8125rem;
+                        background-color: #ffffff;
+                        outline: none;
+                        font-weight: 500;
+                        color: #475569;
+                    }
+                    
+                    /* Metrics Grid */
+                    .metrics-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                        gap: 1rem;
+                        margin-bottom: 2rem;
+                    }
+                    .metric-card {
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        padding: 1.25rem 1rem;
+                        box-shadow: var(--card-shadow);
+                        border-top: 4px solid #3b82f6;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        height: 90px;
+                        box-sizing: border-box;
+                    }
+                    .metric-label {
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                    }
+                    .metric-value {
+                        font-size: 1.75rem;
+                        font-weight: 700;
+                        color: #0f172a;
+                        margin-top: 0.25rem;
+                    }
+                    .metric-card.active-vehicles { border-top-color: #3b82f6; }
+                    .metric-card.available-vehicles { border-top-color: #10b981; }
+                    .metric-card.maint-vehicles { border-top-color: #f59e0b; }
+                    .metric-card.active-trips { border-top-color: #06b6d4; }
+                    .metric-card.pending-trips { border-top-color: #8b5cf6; }
+                    .metric-card.drivers-duty { border-top-color: #14b8a6; }
+                    .metric-card.utilization { border-top-color: #15803d; }
+                    
+                    /* Main Grid Panels */
+                    .panels-grid {
+                        display: grid;
+                        grid-template-columns: 2fr 1fr;
+                        gap: 1.5rem;
+                    }
+                    .panel-card {
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: var(--card-shadow);
+                        padding: 1.5rem;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .panel-header {
+                        font-size: 0.875rem;
+                        font-weight: 700;
+                        color: #475569;
+                        text-transform: uppercase;
+                        letter-spacing: 0.05em;
+                        margin-bottom: 1rem;
+                        padding-bottom: 0.5rem;
+                        border-bottom: 2px solid #f1f5f9;
+                    }
+                    
+                    /* Tables */
+                    .table-wrapper {
+                        overflow-x: auto;
+                    }
+                    .custom-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        text-align: left;
+                        font-size: 0.875rem;
+                    }
+                    .custom-table th {
+                        padding: 0.75rem 1rem;
+                        font-weight: 600;
+                        color: #64748b;
+                        border-bottom: 1px solid var(--border-color);
+                        background-color: #f8fafc;
+                    }
+                    .custom-table td {
+                        padding: 0.875rem 1rem;
+                        border-bottom: 1px solid var(--border-color);
+                        color: #334155;
+                    }
+                    .custom-table tbody tr:hover {
+                        background-color: #f8fafc;
+                    }
+                    
+                    /* Status Badges */
+                    .status-badge {
+                        display: inline-block;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        padding: 0.25rem 0.75rem;
+                        border-radius: 100px;
+                        text-transform: capitalize;
+                    }
+                    .status-badge.on_trip, .status-badge.dispatched {
+                        background-color: rgba(59, 130, 246, 0.1);
+                        color: #2563eb;
+                    }
+                    .status-badge.completed {
+                        background-color: rgba(16, 185, 129, 0.1);
+                        color: #059669;
+                    }
+                    .status-badge.draft, .status-badge.available {
+                        background-color: rgba(100, 116, 139, 0.1);
+                        color: #475569;
+                    }
+                    .status-badge.cancelled, .status-badge.retired, .status-badge.suspended {
+                        background-color: rgba(239, 68, 68, 0.1);
+                        color: #dc2626;
+                    }
+                    .status-badge.in_shop, .status-badge.active {
+                        background-color: rgba(245, 158, 11, 0.1);
+                        color: #d97706;
+                    }
+                    
+                    /* Progress Bars */
+                    .progress-bar-row {
+                        margin-bottom: 1.25rem;
+                    }
+                    .progress-bar-labels {
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 0.8125rem;
+                        font-weight: 500;
+                        color: #475569;
+                        margin-bottom: 0.375rem;
+                    }
+                    .progress-bar-outer {
+                        height: 8px;
+                        background-color: #f1f5f9;
+                        border-radius: 100px;
+                        overflow: hidden;
+                    }
+                    .progress-bar-inner {
+                        height: 100%;
+                        border-radius: 100px;
+                    }
+                    .progress-bar-inner.available { background-color: #10b981; }
+                    .progress-bar-inner.on_trip { background-color: #3b82f6; }
+                    .progress-bar-inner.in_shop { background-color: #f59e0b; }
+                    .progress-bar-inner.retired { background-color: #ef4444; }
+                    
+                    /* Cards and Content Grid for Lists */
+                    .list-content-grid {
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: var(--card-shadow);
+                        padding: 1.5rem;
+                    }
+                    
+                    /* Charts and Analytics Styling */
+                    .charts-row {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 1.5rem;
+                    }
+                    .chart-card {
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: var(--card-shadow);
+                        padding: 1.5rem;
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    
+                    /* Premium Forms, Buttons and Modals CSS */
+                    .btn {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 0.625rem 1.25rem;
+                        font-size: 0.875rem;
+                        font-weight: 600;
+                        border-radius: 8px;
+                        border: none;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-decoration: none;
+                    }
+                    .btn-primary {
+                        background-color: #f59e0b;
+                        color: #ffffff;
+                    }
+                    .btn-primary:hover {
+                        background-color: #d97706;
+                    }
+                    .btn-secondary {
+                        background-color: #e2e8f0;
+                        color: #1e293b;
+                    }
+                    .btn-secondary:hover {
+                        background-color: #cbd5e1;
+                    }
+                    .modal {
+                        display: none;
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0, 0, 0, 0.4);
+                        z-index: 1000;
+                        justify-content: center;
+                        align-items: center;
+                        backdrop-filter: blur(4px);
+                    }
+                    .modal.active {
+                        display: flex;
+                    }
+                    .modal-content {
+                        background-color: #ffffff;
+                        border-radius: 12px;
+                        width: 100%;
+                        max-width: 500px;
+                        padding: 2rem;
+                        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+                        border: 1px solid var(--border-color);
+                        position: relative;
+                        animation: slideUp 0.3s ease;
+                    }
+                    @keyframes slideUp {
+                        from { transform: translateY(20px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                    .modal-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 1.5rem;
+                    }
+                    .modal-title {
+                        font-size: 1.25rem;
+                        font-weight: 700;
+                        color: #0f172a;
+                        margin: 0;
+                    }
+                    .modal-close {
+                        font-size: 1.5rem;
+                        font-weight: 600;
+                        color: #64748b;
+                        cursor: pointer;
+                        background: none;
+                        border: none;
+                    }
+                    .form-group {
+                        margin-bottom: 1.25rem;
+                    }
+                    .form-group label {
+                        display: block;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                        color: #64748b;
+                        text-transform: uppercase;
+                        margin-bottom: 0.375rem;
+                    }
+                    .form-control {
+                        width: 100%;
+                        padding: 0.625rem 0.875rem;
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                        font-size: 0.875rem;
+                        outline: none;
+                        transition: border-color 0.2s;
+                        background-color: #f8fafc;
+                        box-sizing: border-box;
+                    }
+                    .form-control:focus {
+                        border-color: #f59e0b;
+                        background-color: #ffffff;
+                    }
+                    .modal-footer {
+                        display: flex;
+                        justify-content: flex-end;
+                        gap: 0.75rem;
+                        margin-top: 1.5rem;
+                    }
+                </style>
+            </t>
+            
+            <div class="portal-container">
+                <!-- Sidebar -->
+                <div class="portal-sidebar">
+                    <div>
+                        <div class="sidebar-header">
+                            <div class="logo-icon"></div>
+                            <h1 class="sidebar-brand-name">TransitOps</h1>
+                        </div>
+                        <ul class="sidebar-menu">
+                            <li t-if="'dashboard' in allowed_tabs" class="menu-item active" data-tab="dashboard">Dashboard</li>
+                            <li t-if="'fleet' in allowed_tabs" class="menu-item" data-tab="fleet">Fleet</li>
+                            <li t-if="'drivers' in allowed_tabs" class="menu-item" data-tab="drivers">Drivers</li>
+                            <li t-if="'trips' in allowed_tabs" class="menu-item" data-tab="trips">Trips</li>
+                            <li t-if="'maintenance' in allowed_tabs" class="menu-item" data-tab="maintenance">Maintenance</li>
+                            <li t-if="'fuel_expenses' in allowed_tabs" class="menu-item" data-tab="fuel_expenses">Fuel &amp; Expenses</li>
+                            <li t-if="'analytics' in allowed_tabs" class="menu-item" data-tab="analytics">Analytics</li>
+                            <li t-if="'settings' in allowed_tabs" class="menu-item" data-tab="settings">Settings</li>
+                        </ul>
+                    </div>
+                    <div class="sidebar-footer">
+                        <span>PORTAL v1.0</span>
+                        <a href="/web/session/logout?redirect=/web/login" class="btn-logout">Logout</a>
+                    </div>
+                </div>
+                
+                <!-- Main Frame -->
+                <div class="portal-main">
+                    <!-- Top Bar -->
+                    <div class="main-header">
+                        <div class="search-container">
+                            <span class="search-icon">🔍</span>
+                            <input type="text" class="search-input" id="portalSearch" placeholder="Search..."/>
+                        </div>
+                        <div class="user-profile">
+                            <div class="user-details">
+                                <p class="user-name" t-esc="user.name"/>
+                                <span class="user-role-badge" t-esc="role_label"/>
+                            </div>
+                            <div class="user-avatar" t-esc="''.join([part[0] for part in user.name.split() if part][:2]).upper()"/>
+                        </div>
+                    </div>
+                    
+                    <!-- Scrollable Content Pane -->
+                    <div class="content-wrapper">
+                        
+                        <!-- TAB: Dashboard -->
+                        <div class="tab-content active" id="tab-dashboard">
+                            <div class="page-title-section">
+                                <h2 class="page-title">TransitOps Dashboard</h2>
+                                <p class="page-subtitle">Smart Transport Operations Platform Overview</p>
+                            </div>
+                            
+                            <div class="filters-bar">
+                                <select class="filter-select"><option>Vehicle Type: All</option></select>
+                                <select class="filter-select"><option>Status: All</option></select>
+                                <select class="filter-select"><option>Region: All</option></select>
+                            </div>
+                            
+                            <!-- KPI Metrics Grid -->
+                            <div class="metrics-grid">
+                                <div class="metric-card active-vehicles">
+                                    <span class="metric-label">Active Vehicles</span>
+                                    <span class="metric-value" t-esc="active_vehicles"/>
+                                </div>
+                                <div class="metric-card available-vehicles">
+                                    <span class="metric-label">Available Vehicles</span>
+                                    <span class="metric-value" t-esc="available_vehicles"/>
+                                </div>
+                                <div class="metric-card maint-vehicles">
+                                    <span class="metric-label">In Maintenance</span>
+                                    <span class="metric-value" t-esc="maintenance_vehicles"/>
+                                </div>
+                                <div class="metric-card active-trips">
+                                    <span class="metric-label">Active Trips</span>
+                                    <span class="metric-value" t-esc="active_trips"/>
+                                </div>
+                                <div class="metric-card pending-trips">
+                                    <span class="metric-label">Pending Trips</span>
+                                    <span class="metric-value" t-esc="pending_trips"/>
+                                </div>
+                                <div class="metric-card drivers-duty">
+                                    <span class="metric-label">Drivers on Duty</span>
+                                    <span class="metric-value" t-esc="drivers_on_duty"/>
+                                </div>
+                                <div class="metric-card utilization">
+                                    <span class="metric-label">Utilization</span>
+                                    <span class="metric-value" t-esc="str(fleet_utilization) + '%'"/>
+                                </div>
+                            </div>
+                            
+                            <!-- Panels Grid -->
+                            <div class="panels-grid">
+                                <!-- Recent Trips Panel -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Recent Trips</div>
+                                    <div class="table-wrapper">
+                                        <table class="custom-table" id="recentTripsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Trip</th>
+                                                    <th>Vehicle</th>
+                                                    <th>Driver</th>
+                                                    <th>Status</th>
+                                                    <th>ETA</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="recent_trips" t-as="trip">
+                                                    <tr>
+                                                        <td t-esc="trip.name"/>
+                                                        <td t-esc="trip.vehicle_id.registration_no"/>
+                                                        <td t-esc="trip.driver_id.name"/>
+                                                        <td>
+                                                            <span t-attf-class="status-badge #{trip.status}" t-esc="trip.status"/>
+                                                        </td>
+                                                        <td t-esc="trip.eta or '--'"/>
+                                                    </tr>
+                                                </t>
+                                                <t t-if="not recent_trips">
+                                                    <tr>
+                                                        <td colspan="5" class="text-center text-muted">No recent trips found.</td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <!-- Vehicle Status Panel -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Vehicle Status</div>
+                                    
+                                    <div class="progress-bar-row">
+                                        <div class="progress-bar-labels">
+                                            <span>Available</span>
+                                            <span t-esc="str(available_count) + ' Vehicles'"/>
+                                        </div>
+                                        <div class="progress-bar-outer">
+                                            <div class="progress-bar-inner available" t-attf-style="width: #{available_pct}%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress-bar-row">
+                                        <div class="progress-bar-labels">
+                                            <span>On Trip</span>
+                                            <span t-esc="str(on_trip_count) + ' Vehicles'"/>
+                                        </div>
+                                        <div class="progress-bar-outer">
+                                            <div class="progress-bar-inner on_trip" t-attf-style="width: #{on_trip_pct}%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress-bar-row">
+                                        <div class="progress-bar-labels">
+                                            <span>In Shop</span>
+                                            <span t-esc="str(in_shop_count) + ' Vehicles'"/>
+                                        </div>
+                                        <div class="progress-bar-outer">
+                                            <div class="progress-bar-inner in_shop" t-attf-style="width: #{in_shop_pct}%"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="progress-bar-row">
+                                        <div class="progress-bar-labels">
+                                            <span>Retired</span>
+                                            <span t-esc="str(retired_count) + ' Vehicles'"/>
+                                        </div>
+                                        <div class="progress-bar-outer">
+                                            <div class="progress-bar-inner retired" t-attf-style="width: #{retired_pct}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                                              <!-- TAB: Fleet -->
+                        <div class="tab-content" id="tab-fleet">
+                            <div class="page-title-section" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h2 class="page-title">Fleet Assets</h2>
+                                    <p class="page-subtitle">Manage company vehicles and transportation logs</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="openModal('addVehicleModal')">+ Add Vehicle</button>
+                            </div>
+                            
+                            <div class="list-content-grid">
+                                <div class="table-wrapper">
+                                    <table class="custom-table" id="fleetTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Registration No</th>
+                                                <th>Name</th>
+                                                <th>Type</th>
+                                                <th>Load Capacity (kg)</th>
+                                                <th>Odometer (km)</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="vehicles_list" t-as="vehicle">
+                                                <tr>
+                                                    <td t-esc="vehicle.registration_no" style="font-weight: 600;"/>
+                                                    <td t-esc="vehicle.name"/>
+                                                    <td t-esc="vehicle.type"/>
+                                                    <td t-esc="vehicle.capacity_kg"/>
+                                                    <td t-esc="vehicle.odometer"/>
+                                                    <td>
+                                                        <span t-attf-class="status-badge #{vehicle.status}" t-esc="vehicle.status"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Modal: Add Vehicle -->
+                            <div id="addVehicleModal" class="modal">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title">Add New Vehicle</h3>
+                                        <button type="button" class="modal-close" onclick="closeModal('addVehicleModal')">×</button>
+                                    </div>
+                                    <form action="/transitops/vehicle/create" method="POST">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="role" t-att-value="role"/>
+                                        <div class="form-group">
+                                            <label>Registration No (Unique)</label>
+                                            <input type="text" name="registration_no" class="form-control" placeholder="e.g. GJ01AB1234" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Name/Model</label>
+                                            <input type="text" name="name" class="form-control" placeholder="e.g. VAN-05" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Type</label>
+                                            <select name="type" class="form-control">
+                                                <option value="van">Van</option>
+                                                <option value="truck">Truck</option>
+                                                <option value="mini">Mini</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Capacity (kg)</label>
+                                            <input type="number" name="capacity_kg" class="form-control" value="1000" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Odometer (km)</label>
+                                            <input type="number" name="odometer" class="form-control" value="0" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Acquisition Cost</label>
+                                            <input type="number" step="0.01" name="acquisition_cost" class="form-control" value="0.00" required="required"/>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" onclick="closeModal('addVehicleModal')">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Vehicle</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: Drivers -->
+                        <div class="tab-content" id="tab-drivers">
+                            <div class="page-title-section" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h2 class="page-title">Driver Registry</h2>
+                                    <p class="page-subtitle">Track operator licenses, safety scores, and availability</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="openModal('addDriverModal')">+ Add Driver</button>
+                            </div>
+                            
+                            <div class="list-content-grid">
+                                <div class="table-wrapper">
+                                    <table class="custom-table" id="driversTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>License No</th>
+                                                <th>Category</th>
+                                                <th>License Expiry</th>
+                                                <th>Safety Status</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="drivers_list" t-as="driver">
+                                                <tr>
+                                                    <td t-esc="driver.name" style="font-weight: 600;"/>
+                                                    <td t-esc="driver.license_no"/>
+                                                    <td t-esc="driver.category"/>
+                                                    <td t-esc="driver.license_expiry"/>
+                                                    <td>
+                                                        <span t-attf-class="status-badge #{driver.safety_status}" t-esc="driver.safety_status"/>
+                                                    </td>
+                                                    <td>
+                                                        <span t-attf-class="status-badge #{driver.status}" t-esc="driver.status"/>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Modal: Add Driver -->
+                            <div id="addDriverModal" class="modal">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title">Add New Driver</h3>
+                                        <button type="button" class="modal-close" onclick="closeModal('addDriverModal')">×</button>
+                                    </div>
+                                    <form action="/transitops/driver/create" method="POST">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="role" t-att-value="role"/>
+                                        <div class="form-group">
+                                            <label>Driver Name</label>
+                                            <input type="text" name="name" class="form-control" placeholder="e.g. Alex" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>License No</label>
+                                            <input type="text" name="license_no" class="form-control" placeholder="e.g. DL-88213" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Category</label>
+                                            <select name="category" class="form-control">
+                                                <option value="lmv">LMV</option>
+                                                <option value="hmv">HMV</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>License Expiry</label>
+                                            <input type="date" name="license_expiry" class="form-control" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Contact No</label>
+                                            <input type="text" name="contact" class="form-control" placeholder="e.g. 98765xxxxx" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Safety Status</label>
+                                            <select name="safety_status" class="form-control">
+                                                <option value="available">Available</option>
+                                                <option value="suspended">Suspended</option>
+                                            </select>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" onclick="closeModal('addDriverModal')">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Driver</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: Trips -->
+                        <div class="tab-content" id="tab-trips">
+                            <div class="page-title-section">
+                                <h2 class="page-title">Trip Dispatcher</h2>
+                                <p class="page-subtitle">Monitor delivery runs, cargo limits, and ETAs</p>
+                            </div>
+                            
+                            <div class="panels-grid" style="grid-template-columns: 2fr 3fr; gap: 1.5rem;">
+                                <!-- Create Trip Form -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Create Trip</div>
+                                    <form action="/transitops/trip/create" method="POST" id="createTripForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="role" t-att-value="role"/>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Source</label>
+                                            <input type="text" name="source" class="form-control" placeholder="e.g. Gandhinagar Depot" required="required"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Destination</label>
+                                            <input type="text" name="destination" class="form-control" placeholder="e.g. Ahmedabad Hub" required="required"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Vehicle (Available Only)</label>
+                                            <select name="vehicle_id" id="tripVehicleSelect" class="form-control" required="required">
+                                                <option value="">Select a Vehicle...</option>
+                                                <t t-foreach="vehicles_list.filtered(lambda v: v.status == 'available')" t-as="vehicle">
+                                                    <option t-att-value="vehicle.id" t-att-data-capacity="vehicle.capacity_kg" t-esc="vehicle.registration_no + ' (' + str(vehicle.capacity_kg) + ' kg)'"/>
+                                                </t>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Driver (Available Only)</label>
+                                            <select name="driver_id" id="tripDriverSelect" class="form-control" required="required">
+                                                <option value="">Select a Driver...</option>
+                                                <t t-foreach="drivers_list.filtered(lambda d: d.status == 'available' and d.safety_status == 'available' and not d.is_expired)" t-as="driver">
+                                                    <option t-att-value="driver.id" t-esc="driver.name + ' (' + driver.license_no + ')'"/>
+                                                </t>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Cargo Weight (kg)</label>
+                                            <input type="number" name="cargo_weight" id="tripCargoWeight" class="form-control" value="0" required="required"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Planned Distance (km)</label>
+                                            <input type="number" name="planned_distance" class="form-control" value="0" required="required"/>
+                                        </div>
+                                        
+                                        <!-- Error Box for Exceeded Capacity -->
+                                        <div id="capacityErrorBox" style="display: none; background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 0.75rem; color: #b91c1c; font-size: 0.8125rem;">
+                                            <span style="font-weight: 700;">⚠️ Capacity Exceeded:</span>
+                                            <span id="capacityErrorText"></span>
+                                        </div>
+                                        
+                                        <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+                                            <button type="submit" id="tripSubmitBtn" class="btn btn-primary" style="flex: 1;">Dispatch</button>
+                                            <button type="reset" class="btn btn-secondary">Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                
+                                <!-- Live Board -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Live Board</div>
+                                    <div style="display: flex; flex-direction: column; gap: 1rem; max-height: 480px; overflow-y: auto;">
+                                        <t t-foreach="trips_list" t-as="trip">
+                                            <div class="trip-live-card" style="border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem; background-color: #f8fafc; display: flex; flex-direction: column; gap: 0.5rem;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <span style="font-weight: 700; color: #0f172a;" t-esc="trip.name"/>
+                                                    <span style="font-size: 0.75rem; color: #64748b; font-weight: 600;" t-esc="trip.vehicle_id.name + ' / ' + trip.driver_id.name"/>
+                                                </div>
+                                                <div style="font-size: 0.875rem; color: #334155; font-weight: 500;">
+                                                    <span t-esc="trip.source"/> → <span t-esc="trip.destination"/>
+                                                </div>
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
+                                                    <span t-attf-class="status-badge #{trip.status}" t-esc="trip.status"/>
+                                                    <span style="font-size: 0.8125rem; font-weight: 600; color: #64748b;" t-esc="trip.eta or '--'"/>
+                                                </div>
+                                                
+                                                <!-- Action Buttons based on Trip Status -->
+                                                <div t-if="trip.status == 'draft'" style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                                    <a t-attf-href="/transitops/trip/#{trip.id}/dispatch?role=#{role}" class="btn btn-secondary" style="padding: 0.375rem 0.75rem; font-size: 0.75rem;">Dispatch</a>
+                                                    <a t-attf-href="/transitops/trip/#{trip.id}/cancel?role=#{role}" class="btn btn-secondary" style="padding: 0.375rem 0.75rem; font-size: 0.75rem; background-color: #fef2f2; color: #b91c1c;">Cancel</a>
+                                                </div>
+                                                <div t-if="trip.status == 'dispatched'" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; border-top: 1px dashed var(--border-color); padding-top: 0.5rem;">
+                                                    <form t-attf-action="/transitops/trip/#{trip.id}/complete" method="POST" style="display: flex; gap: 0.5rem; align-items: center;">
+                                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                        <input type="hidden" name="role" t-att-value="role"/>
+                                                        <input type="number" name="final_odometer" class="form-control" style="padding: 0.375rem 0.5rem; font-size: 0.75rem; width: 120px;" placeholder="Final Odometer" required="required"/>
+                                                        <button type="submit" class="btn btn-primary" style="padding: 0.375rem 0.75rem; font-size: 0.75rem;">Complete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </t>
+                                        <t t-if="not trips_list">
+                                            <div style="text-align: center; color: #64748b; padding: 2rem;">No trips found.</div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: Maintenance -->
+                        <div class="tab-content" id="tab-maintenance">
+                            <div class="page-title-section">
+                                <h2 class="page-title">Vehicle Maintenance</h2>
+                                <p class="page-subtitle">Track repairs, schedules, and maintenance costs</p>
+                            </div>
+                            
+                            <div class="panels-grid" style="grid-template-columns: 2fr 3fr; gap: 1.5rem;">
+                                <!-- Log Service Record -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Log Service Record</div>
+                                    <form action="/transitops/maintenance/create" method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="role" t-att-value="role"/>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Vehicle</label>
+                                            <select name="vehicle_id" class="form-control" required="required">
+                                                <option value="">Select a Vehicle...</option>
+                                                <t t-foreach="vehicles_list" t-as="vehicle">
+                                                    <option t-att-value="vehicle.id" t-esc="vehicle.registration_no"/>
+                                                </t>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Service Type</label>
+                                            <input type="text" name="service_type" class="form-control" placeholder="e.g. Oil Change, Engine Repair" required="required"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Cost</label>
+                                            <input type="number" name="cost" class="form-control" value="0.00" required="required"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Execution Date</label>
+                                            <input type="date" name="date" class="form-control" required="required"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Status</label>
+                                            <select name="status" class="form-control">
+                                                <option value="active">In Shop</option>
+                                                <option value="completed">Completed</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem;">Save Record</button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Service Logs -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Service Logs</div>
+                                    <div class="table-wrapper" style="max-height: 480px; overflow-y: auto;">
+                                        <table class="custom-table" id="maintTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Vehicle</th>
+                                                    <th>Service</th>
+                                                    <th>Cost</th>
+                                                    <th>Status</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="maintenances_list" t-as="m">
+                                                    <tr>
+                                                        <td t-esc="m.vehicle_id.registration_no" style="font-weight: 600;"/>
+                                                        <td t-esc="m.service_type"/>
+                                                        <td t-esc="m.cost"/>
+                                                        <td>
+                                                            <span t-attf-class="status-badge #{m.status}" t-esc="m.status == 'active' and 'In Shop' or 'Completed'"/>
+                                                        </td>
+                                                        <td>
+                                                            <a t-if="m.status == 'active'" t-attf-href="/transitops/maintenance/#{m.id}/complete?role=#{role}" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Complete</a>
+                                                            <span t-else="" class="text-muted" style="font-size: 0.75rem;">--</span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: Fuel and Expenses -->
+                        <div class="tab-content" id="tab-fuel_expenses">
+                            <div class="page-title-section" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h2 class="page-title">Fuel &amp; Expense Reports</h2>
+                                    <p class="page-subtitle">Review fuel logging and operational aggregations</p>
+                                </div>
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button class="btn btn-primary" onclick="openModal('addFuelModal')">+ Log Fuel</button>
+                                    <button class="btn btn-primary" onclick="openModal('addExpenseModal')" style="background-color: #10b981;">+ Add Expense</button>
+                                </div>
+                            </div>
+                            
+                            <div class="panels-grid">
+                                <!-- Fuel Logs -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Fuel Logs</div>
+                                    <div class="table-wrapper">
+                                        <table class="custom-table" id="fuelLogsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Vehicle</th>
+                                                    <th>Date</th>
+                                                    <th>Fuel (Liters)</th>
+                                                    <th>Cost</th>
+                                                    <th>Odometer (km)</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="fuel_logs_list" t-as="fuel">
+                                                    <tr>
+                                                        <td t-esc="fuel.vehicle_id.registration_no" style="font-weight: 600;"/>
+                                                        <td t-esc="fuel.date"/>
+                                                        <td t-esc="fuel.liters"/>
+                                                        <td t-esc="fuel.fuel_cost"/>
+                                                        <td t-esc="fuel.vehicle_id.odometer"/>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <!-- Expenses -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Trip Expenses</div>
+                                    <div class="table-wrapper">
+                                        <table class="custom-table" id="expensesTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Trip ID</th>
+                                                    <th>Vehicle</th>
+                                                    <th>Toll</th>
+                                                    <th>Other</th>
+                                                    <th>Maint. (Linked)</th>
+                                                    <th>Total Cost</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="expenses_list" t-as="exp">
+                                                    <tr>
+                                                        <td t-esc="exp.trip_id.name" style="font-weight: 600;"/>
+                                                        <td t-esc="exp.vehicle_id.registration_no"/>
+                                                        <td t-esc="exp.toll_cost"/>
+                                                        <td t-esc="exp.other_cost"/>
+                                                        <td t-esc="exp.maint_cost"/>
+                                                        <td t-esc="exp.total_cost" style="font-weight: 600; color: #15803d;"/>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Total operational cost banner -->
+                            <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 10px; padding: 1.25rem; margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-weight: 700; color: #334155; font-size: 0.9375rem;">TOTAL OPERATIONAL COST (AUTO) = FUEL + MAINT</span>
+                                <span style="font-size: 1.5rem; font-weight: 800; color: #f59e0b;" t-esc="total_operational_cost"/>
+                            </div>
+
+                            <!-- Modal: Add Fuel Log -->
+                            <div id="addFuelModal" class="modal">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title">Log Fuel</h3>
+                                        <button type="button" class="modal-close" onclick="closeModal('addFuelModal')">×</button>
+                                    </div>
+                                    <form action="/transitops/fuel/create" method="POST">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="role" t-att-value="role"/>
+                                        <div class="form-group">
+                                            <label>Vehicle</label>
+                                            <select name="vehicle_id" class="form-control" required="required">
+                                                <option value="">Select a Vehicle...</option>
+                                                <t t-foreach="vehicles_list" t-as="vehicle">
+                                                    <option t-att-value="vehicle.id" t-esc="vehicle.registration_no"/>
+                                                </t>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Date</label>
+                                            <input type="date" name="date" class="form-control" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Fuel (Liters)</label>
+                                            <input type="number" step="0.1" name="liters" class="form-control" value="0.0" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Fuel Cost</label>
+                                            <input type="number" step="0.01" name="fuel_cost" class="form-control" value="0.00" required="required"/>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" onclick="closeModal('addFuelModal')">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Fuel Log</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Modal: Add Expense -->
+                            <div id="addExpenseModal" class="modal">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h3 class="modal-title">Add Trip Expense</h3>
+                                        <button type="button" class="modal-close" onclick="closeModal('addExpenseModal')">×</button>
+                                    </div>
+                                    <form action="/transitops/expense/create" method="POST">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="role" t-att-value="role"/>
+                                        <div class="form-group">
+                                            <label>Trip</label>
+                                            <select name="trip_id" class="form-control" required="required">
+                                                <option value="">Select a Trip...</option>
+                                                <t t-foreach="trips_list" t-as="trip">
+                                                    <option t-att-value="trip.id" t-esc="trip.name + ' (' + trip.source + ' to ' + trip.destination + ')'"/>
+                                                </t>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Toll Cost</label>
+                                            <input type="number" step="0.01" name="toll_cost" class="form-control" value="0.00" required="required"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Other Cost</label>
+                                            <input type="number" step="0.01" name="other_cost" class="form-control" value="0.00" required="required"/>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" onclick="closeModal('addExpenseModal')">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Expense</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: Analytics -->
+                        <div class="tab-content" id="tab-analytics">
+                            <div class="page-title-section">
+                                <h2 class="page-title">Operational Insights</h2>
+                                <p class="page-subtitle">Real-time visualizations of logistics and resource efficiency</p>
+                            </div>
+                            
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">Fuel Efficiency</span>
+                                    <span class="metric-value"><t t-esc="fuel_efficiency"/> km/L</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Fleet Utilization</span>
+                                    <span class="metric-value" t-esc="str(fleet_utilization) + '%'"/>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Operational Cost</span>
+                                    <span class="metric-value" t-esc="total_operational_cost"/>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Vehicle ROI</span>
+                                    <span class="metric-value"><t t-esc="vehicle_roi"/>%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="charts-row">
+                                <!-- Chart 1: Vehicle Utilization -->
+                                <div class="chart-card">
+                                    <div class="panel-header">Fleet Status Distribution</div>
+                                    <div style="display: flex; justify-content: center; align-items: center; height: 220px;">
+                                        <!-- SVG Pie Chart -->
+                                        <svg width="200" height="200" viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+                                            <!-- Available -->
+                                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#10b981" stroke-width="4.2" stroke-dasharray="40 60" stroke-dashoffset="0"/>
+                                            <!-- On Trip -->
+                                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#3b82f6" stroke-width="4.2" stroke-dasharray="35 65" stroke-dashoffset="-40"/>
+                                            <!-- In Shop -->
+                                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f59e0b" stroke-width="4.2" stroke-dasharray="15 85" stroke-dashoffset="-75"/>
+                                            <!-- Retired -->
+                                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" stroke-width="4.2" stroke-dasharray="10 90" stroke-dashoffset="-90"/>
+                                        </svg>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-around; font-size: 0.75rem; font-weight: 600; color: #64748b; margin-top: 1rem;">
+                                        <span style="color: #10b981;">● Avail</span>
+                                        <span style="color: #3b82f6;">● Trip</span>
+                                        <span style="color: #f59e0b;">● Shop</span>
+                                        <span style="color: #ef4444;">● Ret</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Chart 2: Trip Performance -->
+                                <div class="chart-card">
+                                    <div class="panel-header">Monthly Trips Handled</div>
+                                    <div style="display: flex; align-items: flex-end; justify-content: space-between; height: 220px; padding: 0 1rem;">
+                                        <!-- SVG Bar Charts -->
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 12%;">
+                                            <div style="height: 60px; width: 100%; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 4px;"></div>
+                                            <span style="font-size: 0.6875rem; color: #64748b; font-weight: 600;">Mar</span>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 12%;">
+                                            <div style="height: 100px; width: 100%; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 4px;"></div>
+                                            <span style="font-size: 0.6875rem; color: #64748b; font-weight: 600;">Apr</span>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 12%;">
+                                            <div style="height: 140px; width: 100%; background: linear-gradient(to top, #3b82f6, #60a5fa); border-radius: 4px;"></div>
+                                            <span style="font-size: 0.6875rem; color: #64748b; font-weight: 600;">May</span>
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; width: 12%;">
+                                            <div style="height: 180px; width: 100%; background: linear-gradient(to top, #f59e0b, #fbbf24); border-radius: 4px;"></div>
+                                            <span style="font-size: 0.6875rem; color: #64748b; font-weight: 600;">Jun</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- TAB: Settings -->
+                        <div class="tab-content" id="tab-settings">
+                            <div class="page-title-section">
+                                <h2 class="page-title">Settings &amp; RBAC</h2>
+                                <p class="page-subtitle">Configure system settings and review access control permissions</p>
+                            </div>
+                            
+                            <div class="panels-grid" style="grid-template-columns: 1fr 1fr; gap: 2rem;">
+                                <!-- General Settings -->
+                                <div class="panel-card">
+                                    <div class="panel-header">General Settings</div>
+                                    <form action="/transitops/settings/save" method="POST" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="role" t-att-value="role"/>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Depot Name</label>
+                                            <input type="text" name="depot_name" class="form-control" t-att-value="request.env['ir.config_parameter'].sudo().get_param('transitops.depot_name', 'Gandhinagar Depot')"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Currency</label>
+                                            <input type="text" name="currency" class="form-control" value="INR (Rs)"/>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label>Distance Unit</label>
+                                            <select name="distance_unit" class="form-control">
+                                                <t t-set="dist_unit" t-value="request.env['ir.config_parameter'].sudo().get_param('transitops.distance_unit', 'kilometers')"/>
+                                                <option value="kilometers" t-att-selected="dist_unit == 'kilometers'">Kilometers</option>
+                                                <option value="miles" t-att-selected="dist_unit == 'miles'">Miles</option>
+                                            </select>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem; align-self: flex-start;">Save changes</button>
+                                    </form>
+                                </div>
+                                
+                                <!-- Role-Based Access Matrix -->
+                                <div class="panel-card">
+                                    <div class="panel-header">Role-Based Access (RBAC)</div>
+                                    <div class="table-wrapper">
+                                        <table class="custom-table" style="font-size: 0.8125rem;">
+                                            <thead>
+                                                <tr>
+                                                    <th>Role</th>
+                                                    <th>Fleet</th>
+                                                    <th>Drivers</th>
+                                                    <th>Trips</th>
+                                                    <th>Fuel/Exp</th>
+                                                    <th>Analytics</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td style="font-weight: 700;">Fleet Manager</td>
+                                                    <td style="color: #15803d; font-weight: 700;">✓</td>
+                                                    <td style="color: #15803d; font-weight: 700;">✓</td>
+                                                    <td>--</td>
+                                                    <td>--</td>
+                                                    <td style="color: #15803d; font-weight: 700;">✓</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="font-weight: 700;">Dispatcher</td>
+                                                    <td>View</td>
+                                                    <td>--</td>
+                                                    <td style="color: #15803d; font-weight: 700;">✓</td>
+                                                    <td>--</td>
+                                                    <td>--</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="font-weight: 700;">Safety Officer</td>
+                                                    <td>--</td>
+                                                    <td style="color: #15803d; font-weight: 700;">✓</td>
+                                                    <td>View</td>
+                                                    <td>--</td>
+                                                    <td>--</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="font-weight: 700;">Financial Analyst</td>
+                                                    <td>View</td>
+                                                    <td>--</td>
+                                                    <td>--</td>
+                                                    <td style="color: #15803d; font-weight: 700;">✓</td>
+                                                    <td style="color: #15803d; font-weight: 700;">✓</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            <script type="text/javascript">
+                document.addEventListener("DOMContentLoaded", function() {
+                    // 1. Sidebar tab switching and URL hash routing logic
+                    const menuItems = document.querySelectorAll(".menu-item");
+                    const tabContents = document.querySelectorAll(".tab-content");
+                    
+                    function switchTab(tabName) {
+                        menuItems.forEach(mi => {
+                            if (mi.getAttribute("data-tab") === tabName) {
+                                mi.classList.add("active");
+                            } else {
+                                mi.classList.remove("active");
+                            }
+                        });
+                        
+                        tabContents.forEach(tc => {
+                            if (tc.id === "tab-" + tabName) {
+                                tc.classList.add("active");
+                            } else {
+                                tc.classList.remove("active");
+                            }
+                        });
+                    }
+                    
+                    menuItems.forEach(item => {
+                        item.addEventListener("click", function() {
+                            const tabName = this.getAttribute("data-tab");
+                            window.location.hash = tabName;
+                        });
+                    });
+                    
+                    function handleHash() {
+                        const hash = window.location.hash.substring(1);
+                        if (hash) {
+                            switchTab(hash);
+                        }
+                    }
+                    window.addEventListener("hashchange", handleHash);
+                    handleHash(); // Switch tab if hash is present on load
+                    
+                    // 2. Modal helpers
+                    window.openModal = function(id) {
+                        const m = document.getElementById(id);
+                        if (m) m.classList.add("active");
+                    };
+                    window.closeModal = function(id) {
+                        const m = document.getElementById(id);
+                        if (m) m.classList.remove("active");
+                    };
+                    
+                    // 3. Cargo capacity validation logic for dispatcher
+                    const vehicleSelect = document.getElementById("tripVehicleSelect");
+                    const cargoInput = document.getElementById("tripCargoWeight");
+                    const errorBox = document.getElementById("capacityErrorBox");
+                    const errorText = document.getElementById("capacityErrorText");
+                    const submitBtn = document.getElementById("tripSubmitBtn");
+                    
+                    function validateCapacity() {
+                        if (!vehicleSelect || !cargoInput) return;
+                        const selectedOption = vehicleSelect.options[vehicleSelect.selectedIndex];
+                        if (!selectedOption || !selectedOption.value) {
+                            errorBox.style.display = "none";
+                            submitBtn.disabled = false;
+                            submitBtn.style.opacity = "";
+                            submitBtn.style.cursor = "";
+                            return;
+                        }
+                        const capacity = parseInt(selectedOption.getAttribute("data-capacity") || "0");
+                        const weight = parseInt(cargoInput.value || "0");
+                        if (weight > capacity) {
+                            const diff = weight - capacity;
+                            errorText.textContent = "Vehicle Capacity: " + capacity + " kg, Cargo Weight: " + weight + " kg. Capacity exceeded by " + diff + " kg - dispatch blocked.";
+                            errorBox.style.display = "block";
+                            submitBtn.disabled = true;
+                            submitBtn.style.opacity = "0.5";
+                            submitBtn.style.cursor = "not-allowed";
+                        } else {
+                            errorBox.style.display = "none";
+                            submitBtn.disabled = false;
+                            submitBtn.style.opacity = "";
+                            submitBtn.style.cursor = "";
+                        }
+                    }
+                    if (vehicleSelect) {
+                        if (cargoInput) {
+                            vehicleSelect.addEventListener("change", validateCapacity);
+                            cargoInput.addEventListener("input", validateCapacity);
+                        }
+                    }
+
+                    // 4. Global search bar input filtering logic
+                    const searchInput = document.getElementById("portalSearch");
+                    if (searchInput) {
+                        searchInput.addEventListener("keyup", function() {
+                            const filterText = this.value.toLowerCase().trim();
+                            const activeTab = document.querySelector(".tab-content.active");
+                            if (!activeTab) return;
+                            
+                            const rows = activeTab.querySelectorAll("table tbody tr");
+                            rows.forEach(row => {
+                                const cells = row.querySelectorAll("td");
+                                let rowMatches = false;
+                                cells.forEach(cell => {
+                                    if (cell.textContent.toLowerCase().includes(filterText)) {
+                                        rowMatches = true;
+                                    }
+                                });
+                                if (rowMatches || filterText === "") {
+                                    row.style.display = "";
+                                } else {
+                                    row.style.display = "none";
+                                }
+                            });
+                        });
+                    }
+                });
+            </script>
+        </t>
+    </template>
+</odoo>

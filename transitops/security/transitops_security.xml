@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Access Category -->
+        <record id="module_category_transitops" model="ir.module.category">
+            <field name="name">TransitOps Access</field>
+            <field name="description">Access rights for TransitOps Smart Transport Operations Platform</field>
+            <field name="sequence">100</field>
+        </record>
+
+        <!-- Access Privilege -->
+        <record id="res_groups_privilege_transitops" model="res.groups.privilege">
+            <field name="name">TransitOps User Roles</field>
+            <field name="sequence">1</field>
+            <field name="category_id" ref="module_category_transitops"/>
+        </record>
+
+        <!-- Security Groups (Roles) -->
+        <record id="group_transitops_fleet_manager" model="res.groups">
+            <field name="name">Fleet Manager</field>
+            <field name="sequence">10</field>
+            <field name="privilege_id" ref="res_groups_privilege_transitops"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_transitops_dispatcher" model="res.groups">
+            <field name="name">Dispatcher</field>
+            <field name="sequence">20</field>
+            <field name="privilege_id" ref="res_groups_privilege_transitops"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_transitops_safety_officer" model="res.groups">
+            <field name="name">Safety Officer</field>
+            <field name="sequence">30</field>
+            <field name="privilege_id" ref="res_groups_privilege_transitops"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+
+        <record id="group_transitops_financial_analyst" model="res.groups">
+            <field name="name">Financial Analyst</field>
+            <field name="sequence">40</field>
+            <field name="privilege_id" ref="res_groups_privilege_transitops"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+        </record>
+        <!-- Record Rules -->
+        <record id="rule_vehicle_dispatcher_available" model="ir.rule">
+            <field name="name">Dispatcher Vehicle Visibility</field>
+            <field name="model_id" ref="model_transitops_vehicle"/>
+            <field name="domain_force">[('status', 'not in', ['in_shop', 'retired'])]</field>
+            <field name="groups" eval="[(4, ref('group_transitops_dispatcher'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+    </data>
+</odoo>

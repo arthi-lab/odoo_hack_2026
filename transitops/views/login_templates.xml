@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="transitops_login" inherit_id="web.login" priority="99">
+        <xpath expr="." position="replace">
+            <t t-call="web.layout">
+                <t t-set="html_data" t-value="{'style': 'height: 100%;'}"/>
+                <t t-set="title">TransitOps - Sign In</t>
+                <t t-set="head">
+                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+                    <style type="text/css">
+                        body {
+                            font-family: 'Inter', sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            height: 100vh;
+                            background-color: #f8fafc;
+                        }
+                        .transitops-login-container {
+                            display: flex;
+                            height: 100vh;
+                            width: 100vw;
+                            overflow: hidden;
+                        }
+                        /* Left Column (Dark Sidebar) */
+                        .login-sidebar {
+                            flex: 1;
+                            background-color: #1e252b; /* Dark charcoal */
+                            color: #f8fafc;
+                            padding: 4rem;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between;
+                            box-sizing: border-box;
+                        }
+                        .sidebar-header {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 1rem;
+                        }
+                        .logo-icon {
+                            width: 48px;
+                            height: 48px;
+                            background: linear-gradient(135deg, #f59e0b, #d97706);
+                            border-radius: 8px;
+                            position: relative;
+                        }
+                        .logo-icon::after {
+                            content: '';
+                            position: absolute;
+                            top: 10px;
+                            left: 10px;
+                            right: 10px;
+                            bottom: 10px;
+                            border: 2px dashed #ffffff;
+                            opacity: 0.8;
+                        }
+                        .brand-title {
+                            font-size: 2.25rem;
+                            font-weight: 700;
+                            margin: 0;
+                            letter-spacing: -0.025em;
+                        }
+                        .brand-subtitle {
+                            font-size: 1rem;
+                            color: #94a3b8;
+                            margin: 0;
+                        }
+                        .sidebar-roles-list {
+                            margin-top: 4rem;
+                        }
+                        .sidebar-roles-list h3 {
+                            font-size: 1.125rem;
+                            font-weight: 600;
+                            margin-bottom: 1rem;
+                            color: #cbd5e1;
+                        }
+                        .sidebar-roles-list ul {
+                            list-style: none;
+                            padding: 0;
+                            margin: 0;
+                        }
+                        .sidebar-roles-list li {
+                            position: relative;
+                            padding-left: 1.5rem;
+                            margin-bottom: 0.75rem;
+                            font-size: 1rem;
+                            color: #94a3b8;
+                        }
+                        .sidebar-roles-list li::before {
+                            content: '•';
+                            color: #f59e0b;
+                            position: absolute;
+                            left: 0;
+                            font-size: 1.25rem;
+                            top: -2px;
+                        }
+                        .sidebar-footer {
+                            font-size: 0.75rem;
+                            color: #64748b;
+                        }
+
+                        /* Right Column (Form Container) */
+                        .login-form-area {
+                            flex: 1.2;
+                            background-color: #ffffff;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 4rem;
+                            box-sizing: border-box;
+                            position: relative;
+                            overflow-y: auto;
+                        }
+                        .form-wrapper {
+                            width: 100%;
+                            max-width: 420px;
+                        }
+                        .form-header h2 {
+                            font-size: 1.875rem;
+                            font-weight: 700;
+                            color: #0f172a;
+                            margin: 0 0 0.5rem 0;
+                        }
+                        .form-header p {
+                            color: #64748b;
+                            font-size: 0.875rem;
+                            margin: 0 0 2rem 0;
+                        }
+                        .input-group-custom {
+                            margin-bottom: 1.25rem;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 0.5rem;
+                        }
+                        .input-group-custom label {
+                            font-size: 0.875rem;
+                            font-weight: 500;
+                            color: #334155;
+                        }
+                        .input-group-custom input, .input-group-custom select {
+                            padding: 0.75rem 1rem;
+                            border: 1px solid #cbd5e1;
+                            border-radius: 6px;
+                            font-size: 0.875rem;
+                            color: #0f172a;
+                            background-color: #ffffff;
+                            outline: none;
+                            transition: border-color 0.2s, box-shadow 0.2s;
+                        }
+                        .input-group-custom input:focus, .input-group-custom select:focus {
+                            border-color: #f59e0b;
+                            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+                        }
+                        .remember-forgot {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 1.5rem;
+                            font-size: 0.875rem;
+                        }
+                        .remember-forgot label {
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            color: #475569;
+                            cursor: pointer;
+                        }
+                        .remember-forgot a {
+                            color: #3b82f6;
+                            text-decoration: none;
+                        }
+                        .remember-forgot a:hover {
+                            text-decoration: underline;
+                        }
+                        .btn-signin {
+                            width: 100%;
+                            padding: 0.75rem;
+                            background-color: #f59e0b;
+                            color: #ffffff;
+                            border: none;
+                            border-radius: 6px;
+                            font-size: 0.875rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: background-color 0.2s;
+                        }
+                        .btn-signin:hover {
+                            background-color: #d97706;
+                        }
+                        .scope-notes {
+                            margin-top: 3rem;
+                            border-top: 1px solid #e2e8f0;
+                            padding-top: 1.5rem;
+                        }
+                        .scope-notes h4 {
+                            font-size: 0.875rem;
+                            font-weight: 600;
+                            color: #475569;
+                            margin: 0 0 0.75rem 0;
+                        }
+                        .scope-notes ul {
+                            list-style: none;
+                            padding: 0;
+                            margin: 0;
+                            font-size: 0.8125rem;
+                            color: #64748b;
+                        }
+                        .scope-notes li {
+                            margin-bottom: 0.5rem;
+                        }
+                        .scope-notes strong {
+                            color: #334155;
+                        }
+                        .alert-custom {
+                            padding: 0.75rem 1rem;
+                            border-radius: 6px;
+                            font-size: 0.875rem;
+                            margin-bottom: 1.5rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                        }
+                        .alert-custom-danger {
+                            background-color: #fef2f2;
+                            border: 1px dashed #f87171;
+                            color: #991b1b;
+                        }
+                        .alert-custom-success {
+                            background-color: #f0fdf4;
+                            border: 1px dashed #4ade80;
+                            color: #166534;
+                        }
+
+                        /* Responsive */
+                        @media (max-width: 768px) {
+                            .login-sidebar {
+                                display: none;
+                            }
+                        }
+                    </style>
+                </t>
+                <div class="transitops-login-container">
+                    <!-- Left Column -->
+                    <div class="login-sidebar">
+                        <div class="sidebar-header">
+                            <div class="logo-icon"></div>
+                            <div>
+                                <h1 class="brand-title">TransitOps</h1>
+                                <p class="brand-subtitle">Smart Transport Operations Platform</p>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-roles-list">
+                            <h3>One login, four roles:</h3>
+                            <ul>
+                                <li>Fleet Manager</li>
+                                <li>Dispatcher</li>
+                                <li>Safety Officer</li>
+                                <li>Financial Analyst</li>
+                            </ul>
+                        </div>
+
+                        <div class="sidebar-footer">
+                            TRANSITOPS © 2026 - RBAC ENABLED
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="login-form-area">
+                        <div class="form-wrapper">
+                            <div class="form-header">
+                                <h2>Sign in to your account</h2>
+                                <p>Enter your credentials to continue</p>
+                            </div>
+
+                            <!-- Error/Success Alerts -->
+                            <div class="alert-custom alert-custom-danger" t-if="error" role="alert">
+                                <span>❌</span> <span t-esc="error"/>
+                            </div>
+                            <div class="alert-custom alert-custom-success" t-if="message" role="status">
+                                <span>✅</span> <span t-esc="message"/>
+                            </div>
+
+                            <form class="transitops-login-form" role="form" t-attf-action="/web/login" method="post" onsubmit="this.action = '/web/login' + location.hash">
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <input type="hidden" name="type" value="password"/>
+                                <input type="hidden" name="redirect" t-att-value="redirect"/>
+
+                                <div class="input-group-custom">
+                                    <label for="login">EMAIL</label>
+                                    <input type="text" placeholder="Raven.k@transitops.in" name="login" t-att-value="login" id="login" required="required" autocapitalize="off" autocomplete="username"/>
+                                </div>
+
+                                <div class="input-group-custom">
+                                    <label for="password">PASSWORD</label>
+                                    <input type="password" placeholder="••••••••" name="password" id="password" required="required" autocomplete="current-password"/>
+                                </div>
+
+                                <div class="input-group-custom">
+                                    <label for="role_rbac">ROLE (RBAC)</label>
+                                    <select name="role_rbac" id="role_rbac" required="required">
+                                        <option value="" disabled="disabled" selected="selected">Select role...</option>
+                                        <t t-foreach="roles or []" t-as="r">
+                                            <option t-att-value="r[0]" t-esc="r[1]" t-att-selected="r[0] == role_rbac"/>
+                                        </t>
+                                    </select>
+                                </div>
+
+                                <div class="remember-forgot">
+                                    <label>
+                                        <input type="checkbox" name="remember"/> Remember me
+                                    </label>
+                                    <a href="#">Forgot password?</a>
+                                </div>
+
+                                <button type="submit" class="btn-signin">Sign In</button>
+                            </form>
+
+                            <div class="scope-notes">
+                                <h4>Access is scoped by role after login:</h4>
+                                <ul>
+                                    <li><strong>• Fleet Manager</strong> → Fleet, Maintenance</li>
+                                    <li><strong>• Dispatcher</strong> → Dashboard, Trips</li>
+                                    <li><strong>• Safety Officer</strong> → Drivers, Compliance</li>
+                                    <li><strong>• Financial Analyst</strong> → Fuel &amp; Expenses, Analytics</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+    </template>
+</odoo>
