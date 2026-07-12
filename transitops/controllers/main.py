@@ -1,13 +1,22 @@
 # -*- coding: utf-8 -*-
 import logging
-from odoo import http, _
+from odoo import http, _, fields
 from odoo.addons.web.controllers.home import Home
 from odoo.http import request
-from odoo.exceptions import AccessDenied
+from odoo.exceptions import ValidationError, UserError
 
 _logger = logging.getLogger(__name__)
 
 class TransitopsHome(Home):
+
+    def _set_flash(self, message, message_type='success'):
+        request.session['transitops_flash'] = {
+            'message': message,
+            'type': message_type
+        }
+
+    def _get_flash(self):
+        return request.session.pop('transitops_flash', None)
 
     @http.route('/web/login', type='http', auth='none', readonly=False)
     def web_login(self, redirect=None, **kw):
@@ -22,7 +31,11 @@ class TransitopsHome(Home):
             
             # System administrators (admin or superuser) bypass role checks to prevent lockout
             if user.id == 1 or user.has_group('base.group_system'):
-                return request.redirect('/transitops/dashboard/admin')
+                if role_rbac:
+                    request.session['transitops_role'] = role_rbac
+                else:
+                    request.session['transitops_role'] = 'admin'
+                return request.redirect('/transitops/dashboard')
 
             ROLE_GROUPS = {
                 'fleet_manager': 'transitops.group_transitops_fleet_manager',
@@ -47,7 +60,8 @@ class TransitopsHome(Home):
                     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
                     return response
                 else:
-                    return request.redirect(f'/transitops/dashboard/{role_rbac}')
+                    request.session['transitops_role'] = role_rbac
+                    return request.redirect('/transitops/dashboard')
             else:
                 # No valid role selected for a non-admin user
                 request.session.logout()
@@ -67,11 +81,18 @@ class TransitopsHome(Home):
                 response.qcontext['role_rbac'] = request.params.get('role_rbac')
         return response
 
-    @http.route(['/transitops/dashboard', '/transitops/dashboard/<string:role>'], type='http', auth='user', readonly=False)
-    def transitops_dashboard_portal(self, role=None, **kw):
+    @http.route(['/transitops/dashboard', '/transitops/dashboard/<string:old_role_url>'], type='http', auth='user', readonly=False)
+    def transitops_dashboard_portal(self, old_role_url=None, **kw):
         user = request.env.user
         
-        # Determine role if not specified
+        # If accessing the old URL schema, redirect to the clean single route
+        if old_role_url:
+            if old_role_url in ['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst', 'admin']:
+                request.session['transitops_role'] = old_role_url
+            return request.redirect('/transitops/dashboard')
+
+        # Resolve role from session or groups
+        role = request.session.get('transitops_role')
         if not role:
             if user.has_group('transitops.group_transitops_fleet_manager'):
                 role = 'fleet_manager'
@@ -133,6 +154,9 @@ class TransitopsHome(Home):
         allowed_tabs = role_tabs.get(role, role_tabs['admin'])
         recent_trips = trips.sudo().search([], limit=10, order='id desc')
 
+        # Read and clear flash message
+        flash = self._get_flash()
+
         values = {
             'user': user,
             'role': role,
@@ -163,6 +187,9 @@ class TransitopsHome(Home):
             'total_operational_cost': total_op_cost,
             'fuel_efficiency': fuel_eff,
             'vehicle_roi': veh_roi,
+            'flash_message': flash.get('message') if flash else None,
+            'flash_type': flash.get('type') if flash else None,
+            'today': fields.Date.today().strftime('%Y-%m-%d'),
         }
         
         return request.render('transitops.portal_dashboard_template', values)
@@ -177,154 +204,277 @@ class TransitopsHome(Home):
 
     @http.route('/transitops/vehicle/create', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_vehicle_create(self, **kw):
-        role = kw.get('role', 'admin')
         try:
+            reg_no = kw.get('registration_no')
+            if not reg_no or not reg_no.strip():
+                raise ValidationError(_("Registration number is required."))
+            name = kw.get('name')
+            if not name or not name.strip():
+                raise ValidationError(_("Vehicle Name is required."))
+            capacity_kg = int(kw.get('capacity_kg') or 0)
+            if capacity_kg <= 0:
+                raise ValidationError(_("Capacity must be greater than 0 kg."))
+            
+            # Check duplicate registration
+            existing = request.env['transitops.vehicle'].sudo().search([('registration_no', '=', reg_no.strip())], limit=1)
+            if existing:
+                raise ValidationError(_("A vehicle with Registration No %s already exists.") % reg_no)
+                
             request.env['transitops.vehicle'].sudo().create({
-                'registration_no': kw.get('registration_no'),
-                'name': kw.get('name'),
+                'registration_no': reg_no.strip(),
+                'name': name.strip(),
                 'type': kw.get('type'),
-                'capacity_kg': int(kw.get('capacity_kg') or 0),
+                'capacity_kg': capacity_kg,
                 'odometer': int(kw.get('odometer') or 0),
                 'acquisition_cost': float(kw.get('acquisition_cost') or 0.0),
                 'status': 'available',
             })
+            self._set_flash(_("Vehicle created successfully."), 'success')
+        except (ValidationError, UserError) as e:
+            self._set_flash(str(e), 'error')
         except Exception as e:
-            _logger.error("Failed to create vehicle: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#fleet')
+            self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#fleet')
 
     @http.route('/transitops/driver/create', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_driver_create(self, **kw):
-        role = kw.get('role', 'admin')
         try:
+            name = kw.get('name')
+            if not name or not name.strip():
+                raise ValidationError(_("Driver Name is required."))
+            license_no = kw.get('license_no')
+            if not license_no or not license_no.strip():
+                raise ValidationError(_("License Number is required."))
+            
+            # Duplicate license check
+            existing = request.env['transitops.driver'].sudo().search([('license_no', '=', license_no.strip())], limit=1)
+            if existing:
+                raise ValidationError(_("A driver with License No %s already exists.") % license_no)
+            
             request.env['transitops.driver'].sudo().create({
-                'name': kw.get('name'),
-                'license_no': kw.get('license_no'),
+                'name': name.strip(),
+                'license_no': license_no.strip(),
                 'category': kw.get('category'),
                 'license_expiry': kw.get('license_expiry'),
                 'contact': kw.get('contact'),
                 'safety_status': kw.get('safety_status', 'available'),
                 'status': 'available',
             })
+            self._set_flash(_("Driver created successfully."), 'success')
+        except (ValidationError, UserError) as e:
+            self._set_flash(str(e), 'error')
         except Exception as e:
-            _logger.error("Failed to create driver: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#drivers')
+            self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#drivers')
 
     @http.route('/transitops/trip/create', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_trip_create(self, **kw):
-        role = kw.get('role', 'admin')
         try:
+            source = kw.get('source')
+            dest = kw.get('destination')
+            if not source or not source.strip():
+                raise ValidationError(_("Source location is required."))
+            if not dest or not dest.strip():
+                raise ValidationError(_("Destination location is required."))
+            
+            vehicle_id = int(kw.get('vehicle_id') or 0)
+            driver_id = int(kw.get('driver_id') or 0)
+            if not vehicle_id:
+                raise ValidationError(_("Please select a vehicle."))
+            if not driver_id:
+                raise ValidationError(_("Please select a driver."))
+                
+            cargo_weight = int(kw.get('cargo_weight') or 0)
+            if cargo_weight <= 0:
+                raise ValidationError(_("Cargo weight must be greater than 0 kg."))
+                
+            planned_distance = float(kw.get('planned_distance') or 0.0)
+            if planned_distance <= 0.0:
+                raise ValidationError(_("Planned distance must be greater than 0 km."))
+
+            vehicle = request.env['transitops.vehicle'].sudo().browse(vehicle_id)
+            if not vehicle.exists():
+                raise ValidationError(_("Selected vehicle does not exist."))
+            driver = request.env['transitops.driver'].sudo().browse(driver_id)
+            if not driver.exists():
+                raise ValidationError(_("Selected driver does not exist."))
+
+            # Business validation: pre-flight check cargo weight vs vehicle capacity
+            if cargo_weight > vehicle.capacity_kg:
+                raise ValidationError(_("Cargo weight (%s kg) exceeds vehicle capacity (%s kg).") % (cargo_weight, vehicle.capacity_kg))
+
+            # Driver validation: check license expiry
+            if driver.is_expired:
+                raise ValidationError(_("Selected driver's license is expired."))
+            if driver.safety_status == 'suspended' or driver.status == 'suspended':
+                raise ValidationError(_("Selected driver is suspended or unavailable."))
+
             request.env['transitops.trip'].sudo().create({
-                'source': kw.get('source'),
-                'destination': kw.get('destination'),
-                'vehicle_id': int(kw.get('vehicle_id')),
-                'driver_id': int(kw.get('driver_id')),
-                'cargo_weight': int(kw.get('cargo_weight') or 0),
-                'planned_distance': float(kw.get('planned_distance') or 0.0),
+                'source': source.strip(),
+                'destination': dest.strip(),
+                'vehicle_id': vehicle_id,
+                'driver_id': driver_id,
+                'cargo_weight': cargo_weight,
+                'planned_distance': planned_distance,
+                'notes': kw.get('notes'),
+                'scheduled_date': kw.get('scheduled_date') or fields.Date.today(),
                 'status': 'draft',
             })
+            self._set_flash(_("Trip created successfully in Draft status."), 'success')
+        except (ValidationError, UserError) as e:
+            self._set_flash(str(e), 'error')
         except Exception as e:
-            _logger.error("Failed to create trip: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#trips')
+            self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#trips')
 
-    @http.route('/transitops/trip/<int:trip_id>/dispatch', type='http', auth='user', methods=['GET'], csrf=False)
+    @http.route('/transitops/trip/<int:trip_id>/dispatch', type='http', auth='user', methods=['POST', 'GET'], csrf=False)
     def transitops_trip_dispatch(self, trip_id, **kw):
-        role = kw.get('role', 'admin')
         trip = request.env['transitops.trip'].sudo().browse(trip_id)
         if trip.exists():
             try:
                 trip.action_dispatch()
+                self._set_flash(_("Trip %s dispatched successfully.") % trip.name, 'success')
+            except (ValidationError, UserError) as e:
+                self._set_flash(str(e), 'error')
             except Exception as e:
-                _logger.error("Failed to dispatch trip: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#trips')
+                self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#trips')
 
     @http.route('/transitops/trip/<int:trip_id>/complete', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_trip_complete(self, trip_id, **kw):
-        role = kw.get('role', 'admin')
         trip = request.env['transitops.trip'].sudo().browse(trip_id)
         if trip.exists():
             try:
                 final_odo = int(kw.get('final_odometer') or 0)
+                if final_odo <= 0:
+                    raise ValidationError(_("Please enter a valid final odometer reading."))
                 trip.write({
                     'final_odometer': final_odo,
                     'status': 'completed'
                 })
+                self._set_flash(_("Trip %s marked as Completed.") % trip.name, 'success')
+            except (ValidationError, UserError) as e:
+                self._set_flash(str(e), 'error')
             except Exception as e:
-                _logger.error("Failed to complete trip: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#trips')
+                self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#trips')
 
-    @http.route('/transitops/trip/<int:trip_id>/cancel', type='http', auth='user', methods=['GET'], csrf=False)
+    @http.route('/transitops/trip/<int:trip_id>/cancel', type='http', auth='user', methods=['POST', 'GET'], csrf=False)
     def transitops_trip_cancel(self, trip_id, **kw):
-        role = kw.get('role', 'admin')
         trip = request.env['transitops.trip'].sudo().browse(trip_id)
         if trip.exists():
             try:
                 trip.action_cancel()
+                self._set_flash(_("Trip %s cancelled.") % trip.name, 'success')
+            except (ValidationError, UserError) as e:
+                self._set_flash(str(e), 'error')
             except Exception as e:
-                _logger.error("Failed to cancel trip: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#trips')
+                self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#trips')
 
     @http.route('/transitops/maintenance/create', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_maintenance_create(self, **kw):
-        role = kw.get('role', 'admin')
         try:
+            vehicle_id = int(kw.get('vehicle_id') or 0)
+            if not vehicle_id:
+                raise ValidationError(_("Please select a vehicle."))
+            vehicle = request.env['transitops.vehicle'].sudo().browse(vehicle_id)
+            if vehicle.status == 'on_trip':
+                raise ValidationError(_("Vehicle %s is currently on a trip. Cannot log maintenance.") % vehicle.registration_no)
+                
+            cost = float(kw.get('cost') or 0.0)
+            if cost < 0.0:
+                raise ValidationError(_("Maintenance cost cannot be negative."))
+                
             request.env['transitops.maintenance'].sudo().create({
-                'vehicle_id': int(kw.get('vehicle_id')),
+                'vehicle_id': vehicle_id,
                 'service_type': kw.get('service_type'),
-                'cost': float(kw.get('cost') or 0.0),
+                'cost': cost,
                 'date': kw.get('date'),
                 'status': kw.get('status', 'active'),
             })
+            self._set_flash(_("Maintenance record created successfully."), 'success')
+        except (ValidationError, UserError) as e:
+            self._set_flash(str(e), 'error')
         except Exception as e:
-            _logger.error("Failed to create maintenance record: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#maintenance')
+            self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#maintenance')
 
     @http.route('/transitops/maintenance/<int:maint_id>/complete', type='http', auth='user', methods=['GET'], csrf=False)
     def transitops_maintenance_complete(self, maint_id, **kw):
-        role = kw.get('role', 'admin')
         maint = request.env['transitops.maintenance'].sudo().browse(maint_id)
         if maint.exists():
             try:
                 maint.write({'status': 'completed'})
+                self._set_flash(_("Maintenance log completed successfully."), 'success')
+            except (ValidationError, UserError) as e:
+                self._set_flash(str(e), 'error')
             except Exception as e:
-                _logger.error("Failed to complete maintenance: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#maintenance')
+                self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#maintenance')
 
     @http.route('/transitops/fuel/create', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_fuel_create(self, **kw):
-        role = kw.get('role', 'admin')
         try:
+            vehicle_id = int(kw.get('vehicle_id') or 0)
+            if not vehicle_id:
+                raise ValidationError(_("Please select a vehicle."))
+            liters = float(kw.get('liters') or 0.0)
+            if liters <= 0:
+                raise ValidationError(_("Fuel liters must be greater than 0."))
+            fuel_cost = float(kw.get('fuel_cost') or 0.0)
+            if fuel_cost <= 0:
+                raise ValidationError(_("Fuel cost must be greater than 0."))
+                
             request.env['transitops.fuel_log'].sudo().create({
-                'vehicle_id': int(kw.get('vehicle_id')),
+                'vehicle_id': vehicle_id,
                 'date': kw.get('date'),
-                'liters': float(kw.get('liters') or 0.0),
-                'fuel_cost': float(kw.get('fuel_cost') or 0.0),
+                'liters': liters,
+                'fuel_cost': fuel_cost,
             })
+            self._set_flash(_("Fuel log added successfully."), 'success')
+        except (ValidationError, UserError) as e:
+            self._set_flash(str(e), 'error')
         except Exception as e:
-            _logger.error("Failed to log fuel: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#fuel_expenses')
+            self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#fuel_expenses')
 
     @http.route('/transitops/expense/create', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_expense_create(self, **kw):
-        role = kw.get('role', 'admin')
         try:
+            trip_id = int(kw.get('trip_id') or 0)
+            if not trip_id:
+                raise ValidationError(_("Please select a trip."))
+            toll_cost = float(kw.get('toll_cost') or 0.0)
+            other_cost = float(kw.get('other_cost') or 0.0)
+            if toll_cost < 0 or other_cost < 0:
+                raise ValidationError(_("Costs cannot be negative."))
+                
             request.env['transitops.expense'].sudo().create({
-                'trip_id': int(kw.get('trip_id')),
-                'toll_cost': float(kw.get('toll_cost') or 0.0),
-                'other_cost': float(kw.get('other_cost') or 0.0),
+                'trip_id': trip_id,
+                'toll_cost': toll_cost,
+                'other_cost': other_cost,
             })
+            self._set_flash(_("Expense logged successfully."), 'success')
+        except (ValidationError, UserError) as e:
+            self._set_flash(str(e), 'error')
         except Exception as e:
-            _logger.error("Failed to log expense: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#fuel_expenses')
+            self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#fuel_expenses')
 
     @http.route('/transitops/settings/save', type='http', auth='user', methods=['POST'], csrf=True)
     def transitops_settings_save(self, **kw):
-        role = kw.get('role', 'admin')
         try:
+            depot_name = kw.get('depot_name')
+            if not depot_name or not depot_name.strip():
+                raise ValidationError(_("Depot Name cannot be blank."))
             sudo_config = request.env['ir.config_parameter'].sudo()
-            if 'depot_name' in kw:
-                sudo_config.set_param('transitops.depot_name', kw.get('depot_name'))
+            sudo_config.set_param('transitops.depot_name', depot_name.strip())
             if 'distance_unit' in kw:
                 sudo_config.set_param('transitops.distance_unit', kw.get('distance_unit'))
+            self._set_flash(_("Settings saved successfully."), 'success')
+        except (ValidationError, UserError) as e:
+            self._set_flash(str(e), 'error')
         except Exception as e:
-            _logger.error("Failed to save settings: %s", e)
-        return request.redirect(f'/transitops/dashboard/{role}#settings')
+            self._set_flash(str(e), 'error')
+        return request.redirect('/transitops/dashboard#settings')

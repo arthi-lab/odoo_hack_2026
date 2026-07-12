@@ -23,7 +23,8 @@ class TransitopsMaintenance(models.Model):
             if record.status == 'active':
                 record.vehicle_id.status = 'in_shop'
             elif record.status == 'completed' and record.vehicle_id.status == 'in_shop':
-                record.vehicle_id.status = 'available'
+                if record.vehicle_id.status != 'retired':
+                    record.vehicle_id.status = 'available'
         return records
 
     def write(self, vals):
@@ -38,11 +39,12 @@ class TransitopsMaintenance(models.Model):
             if old_status != new_status or old_vehicle != new_vehicle:
                 if new_status == 'active':
                     new_vehicle.status = 'in_shop'
-                    if old_vehicle != new_vehicle and old_vehicle.status == 'in_shop':
+                    if old_vehicle != new_vehicle and old_vehicle.status == 'in_shop' and old_vehicle.status != 'retired':
                         old_vehicle.status = 'available'
                 elif new_status == 'completed':
-                    new_vehicle.status = 'available'
-                    if old_vehicle != new_vehicle and old_vehicle.status == 'in_shop':
+                    if new_vehicle.status != 'retired':
+                        new_vehicle.status = 'available'
+                    if old_vehicle != new_vehicle and old_vehicle.status == 'in_shop' and old_vehicle.status != 'retired':
                         old_vehicle.status = 'available'
                         
         res = super(TransitopsMaintenance, self).write(vals)

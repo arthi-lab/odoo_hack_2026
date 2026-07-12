@@ -42,6 +42,10 @@ class TransitopsTrip(models.Model):
     ], string='Status', required=True, default='draft')
 
     final_odometer = fields.Integer(string='Final Odometer (km)')
+    notes = fields.Text(string='Notes/Remarks')
+    scheduled_date = fields.Date(string='Scheduled Date', default=fields.Date.today)
+    actual_start = fields.Datetime(string='Actual Start')
+    actual_end = fields.Datetime(string='Actual End')
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -90,7 +94,7 @@ class TransitopsTrip(models.Model):
                     
                     trip.vehicle_id.status = 'on_trip'
                     trip.driver_id.status = 'on_trip'
-                    print(f"DEBUG_WRITE: vehicle_status set to {trip.vehicle_id.status}, driver_status set to {trip.driver_id.status}")
+                    vals['actual_start'] = fields.Datetime.now()
                 
                 elif new_status == 'completed':
                     # Update vehicle odometer
@@ -106,6 +110,7 @@ class TransitopsTrip(models.Model):
                     # Reset vehicle and driver to available
                     trip.vehicle_id.status = 'available'
                     trip.driver_id.status = 'available'
+                    vals['actual_end'] = fields.Datetime.now()
                     
                     # Recompute driver trip completion rate
                     # Trigger rate recomputation
